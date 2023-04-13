@@ -1,17 +1,12 @@
 package com.Spring.service;
 
-import java.io.FileOutputStream;
+import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
@@ -19,17 +14,21 @@ import org.springframework.stereotype.Service;
 import com.Spring.entity.CitizenPlan;
 import com.Spring.repo.CitizenPlanRepository;
 import com.Spring.request.SearchRequest;
-import com.lowagie.text.Document;
-import com.lowagie.text.PageSize;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.pdf.PdfPCell;
-import com.lowagie.text.pdf.PdfPTable;
-import com.lowagie.text.pdf.PdfWriter;
+import com.Spring.util.EmailUtils;
+import com.Spring.util.ExcelGenerator;
+import com.Spring.util.PdfGenerator;
 
 @Service
 public class ReportServiceImpl implements ReportService {
 	@Autowired
 	private CitizenPlanRepository repo;
+	@Autowired
+	private ExcelGenerator excelGenerator;
+	@Autowired
+	private PdfGenerator pdfGenerator;
+	
+	@Autowired
+	private EmailUtils emailUtils;
 
 	@Override
 	public List<String> getPlanNames() {
@@ -46,86 +45,32 @@ public class ReportServiceImpl implements ReportService {
 	@Override
 	public boolean exportExcel(HttpServletResponse response) throws Exception {
 		
-		 // Create a new Workbook
-	    Workbook workbook = new XSSFWorkbook();
-
-	    // Create a new Sheet
-	    Sheet sheet = workbook.createSheet("Sheet-data");
-
-	    // Create a new Row
-	    Row headerRow =  sheet.createRow(0);
-	    headerRow.createCell(0).setCellValue("Citizen Name");
-	    headerRow.createCell(1).setCellValue("Plan Name");
-	    headerRow.createCell(2).setCellValue("Plan Status");
-	    headerRow.createCell(3).setCellValue("Start Date");
-	    headerRow.createCell(4).setCellValue("End Date");
-	    
-	    List<CitizenPlan> records = repo.findAll();
-	    
-	    
-	    int rowNum = 1;
-	    for (CitizenPlan plan : records) {
-	        Row row = sheet.createRow(rowNum++);
-	        row.createCell(0).setCellValue(plan.getCitizenName());
-	        row.createCell(1).setCellValue(plan.getPlanName());
-	        row.createCell(2).setCellValue(plan.getPlanStatus());
-	        row.createCell(3).setCellValue(plan.getPlanStartDate()+"");
-	        row.createCell(4).setCellValue(plan.getPlanEndDate()+"");
-	    
-        
-//	    FileOutputStream fos = new FileOutputStream("plan-data.xlsx");
-//	    workbook.write(fos);
-//	    fos.close();
-//	    workbook.close();
-	        
-	    } 
-	        ServletOutputStream outputStream = response.getOutputStream();
-	        workbook.write(outputStream);
-	        outputStream.close();
-	        workbook.close();
-	    
+		List<CitizenPlan> plans = repo.findAll();
+		File f= new File("plans.xlsx");
+		excelGenerator.generate(response, plans,f);
+		String subject ="Test mail";
+		String body ="<h1>Email Sent</h1>";
+		String to = "rajinikanthr396@gmail.com";
+		
+		
+		emailUtils.sendEmail(to, subject, body,f);
+		f.delete();
 
 		return true;
 	}
 
 	@Override
-	public boolean exportPdf(HttpServletResponse response) throws Exception{
-		// TODO Auto-generated method stub
-		 Document document = new Document();
-	        PdfWriter.getInstance(document, response.getOutputStream());
+	public boolean exportPdf(HttpServletResponse response) throws Exception {
+		List<CitizenPlan> plans = repo.findAll();
+		File f= new File("planData.pdf");
+		pdfGenerator.generate(response, plans,f);
+		String subject ="Test mail";
+		String body ="<h1>Email Sent</h1>";
+		String to = "rajinikanthr396@gmail.com";
+		emailUtils.sendEmail(to, subject, body,f);
+		f.delete();
 
-	        document.open();
-
-	        // Add table name
-	        Paragraph tableName = new Paragraph("Citizen Plan Info");
-	        tableName.setAlignment(Paragraph.ALIGN_CENTER);
-	        document.add(tableName);
-
-	        // Add table with 6 columns
-	        PdfPTable table = new PdfPTable(6);
-	        table.setWidthPercentage(100f);
-	        table.setSpacingBefore(5);
-
-	        table.addCell("citizenName");
-	        table.addCell("Gender");
-	        table.addCell("planname");
-	        table.addCell("plan status");
-	        table.addCell("start date");
-	        table.addCell("end date");
-	        List<CitizenPlan> plans = repo.findAll();
-	        for (CitizenPlan plan :plans)
-	        {
-	        table.addCell(plan.getCitizenName());
-	        table.addCell(plan.getGender());
-	        table.addCell(plan.getPlanName());
-	        table.addCell(plan.getPlanStatus());
-	        table.addCell(plan.getPlanStartDate()+"");
-	        table.addCell(plan.getPlanEndDate()+"");
-	        }
-	        document.add(table);
-
-	        document.setPageSize(PageSize.A4);
-	        document.close();
+		
 		return true;
 	}
 

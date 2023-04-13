@@ -11,12 +11,24 @@ spring:
       hibernate:
        globally_quoted_identifiers:true
    show-sql: true
-      
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: Sheshiravula396@gmail.com
+    password: qhxkibpmzjtwdkhu
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+     
   mvc:
     view:
       prefix: /views/
       suffix: .jsp
   profiles:
     active:
-        dev
+       dev
     
