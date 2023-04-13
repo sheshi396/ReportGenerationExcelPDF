@@ -2,6 +2,8 @@ package com.Spring.service;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletResponse;
+
 import com.Spring.entity.CitizenPlan;
 import com.Spring.request.SearchRequest;
 
@@ -13,8 +15,8 @@ public interface ReportService {
 
 	public List<CitizenPlan> search(SearchRequest request);
 
-	public boolean exportExcel();
+	public boolean exportExcel(HttpServletResponse response) throws Exception;
 
-	public boolean exportPdf();
+	public boolean exportPdf(HttpServletResponse response) throws Exception;
 
 }
